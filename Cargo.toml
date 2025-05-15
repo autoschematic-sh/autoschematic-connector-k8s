@@ -1,0 +1,28 @@
+[package]
+name = "autoschematic-connector-k8s"
+version = "0.4.0"
+edition = "2024"
+
+[[bin]]
+name = "autoschematic-connector-k8s"
+
+[dependencies]
+anyhow = "1.0.95"
+async-trait = "0.1.86"
+autoschematic-core = { path = "../../autoschematic/autoschematic-core", version = "0.4.0"}
+# autoschematic-core = "0.3.0"
+ron = "0.10.1"
+serde = { version = "1.0.217", features = ["derive"] }
+thiserror = "2.0.11"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+serde_json = "1.0.138"
+similar = { version = "2.7.0", features = ["unicode"] }
+tokio = { version = "1.43.0", features = ["rt-multi-thread"] }
+uuid = { version = "1.15.1", features = ["v4"] }
+lazy_static = "1.5.0"
+kube = { version = "1.0.0", features = ["derive", "runtime"] }
+k8s-openapi = { version = "0.25.0", features = ["latest"] }
+serde_yaml = "0.9.34"
+rustls = { version = "0.23.27", features = ["ring"] }
+arbitrary = { version = "1.4.1", features = ["derive_arbitrary"] }
