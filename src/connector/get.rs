@@ -43,13 +43,7 @@ macro_rules! get {
 
 impl K8sConnector {
     pub async fn do_get(&self, addr: &Path) -> Result<Option<GetResourceOutput>, anyhow::Error> {
-        let Some(addr) = K8sResourceAddress::from_path(addr)? else {
-            tracing::warn!("k8s::do_get({:?})", addr);
-            return Ok(None);
-        };
-
-        // get!(self.client.clone(), Namespace, addr);
-        // get!(self.client.clone(), , addr);
+        let addr = K8sResourceAddress::from_path(addr)?;
 
         // Ok(None)
         let client = self.client.clone();

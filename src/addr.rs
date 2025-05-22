@@ -1,12 +1,14 @@
 use std::path::{Path, PathBuf};
 
+#[cfg(feature = "fuzz")]
 use arbitrary::Arbitrary;
-use autoschematic_core::connector::ResourceAddress;
+use autoschematic_core::{connector::ResourceAddress, error_util::{invalid_addr, invalid_addr_path}};
 
 type Namespace = String;
 type Name = String;
 
-#[derive(Debug, Clone, PartialEq, Eq, Arbitrary)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzz", derive(Arbitrary))]
 pub enum K8sResourceAddress {
     Namespace(Namespace),
     Pod(Namespace, Name),
@@ -23,7 +25,7 @@ pub enum K8sResourceAddress {
 }
 
 impl ResourceAddress for K8sResourceAddress {
-    fn from_path(path: &Path) -> anyhow::Result<Option<Self>> {
+    fn from_path(path: &Path) -> anyhow::Result<Self> {
         let path_components: Vec<&str> = path
             .components()
             .into_iter()
@@ -37,62 +39,61 @@ impl ResourceAddress for K8sResourceAddress {
             s.strip_suffix(".ron").unwrap_or(s)
         }
 
-        let res = match &path_components[..] {
-            ["k8s", "ns", namespace, "ns.ron"] => Some(K8sResourceAddress::Namespace(namespace.to_string())),
+        match &path_components[..] {
+            ["k8s", "ns", namespace, "ns.ron"] => Ok(K8sResourceAddress::Namespace(namespace.to_string())),
             ["k8s", "ns", namespace, "pod", pod_name] if val(pod_name) => {
-                Some(K8sResourceAddress::Pod(namespace.to_string(), strip(pod_name).to_string()))
+                Ok(K8sResourceAddress::Pod(namespace.to_string(), strip(pod_name).to_string()))
             }
             ["k8s", "ns", namespace, "service", service_name] if val(service_name) => {
-                Some(K8sResourceAddress::Service(
+                Ok(K8sResourceAddress::Service(
                     namespace.to_string(),
                     strip(service_name).to_string(),
                 ))
             }
             ["k8s", "ns", namespace, "deployment", deployment_name] if val(deployment_name) => {
-                Some(K8sResourceAddress::Deployment(
+                Ok(K8sResourceAddress::Deployment(
                     namespace.to_string(),
                     strip(deployment_name).to_string(),
                 ))
             }
             ["k8s", "ns", namespace, "configmap", configmap_name] if val(configmap_name) => {
-                Some(K8sResourceAddress::ConfigMap(
+                Ok(K8sResourceAddress::ConfigMap(
                     namespace.to_string(),
                     strip(configmap_name).to_string(),
                 ))
             }
             ["k8s", "ns", namespace, "secret", secret_name] if val(secret_name) => {
-                Some(K8sResourceAddress::Secret(
+                Ok(K8sResourceAddress::Secret(
                     namespace.to_string(),
                     strip(secret_name).to_string(),
                 ))
             }
             ["k8s", "ns", namespace, "persistentvolumeclaim", pvc_name] if val(pvc_name) => {
-                Some(K8sResourceAddress::PersistentVolumeClaim(
+                Ok(K8sResourceAddress::PersistentVolumeClaim(
                     namespace.to_string(),
                     strip(pvc_name).to_string(),
                 ))
             }
             ["k8s", "persistentvolume", pv_name] if val(pv_name) => {
-                Some(K8sResourceAddress::PersistentVolume(strip(pv_name).to_string()))
+                Ok(K8sResourceAddress::PersistentVolume(strip(pv_name).to_string()))
             }
             ["k8s", "ns", namespace, "role", role_name] if val(role_name) => {
-                Some(K8sResourceAddress::Role(namespace.to_string(), strip(role_name).to_string()))
+                Ok(K8sResourceAddress::Role(namespace.to_string(), strip(role_name).to_string()))
             }
             ["k8s", "ns", namespace, "rolebinding", role_name] if val(role_name) => {
-                Some(K8sResourceAddress::RoleBinding(
+                Ok(K8sResourceAddress::RoleBinding(
                     namespace.to_string(),
                     strip(role_name).to_string(),
                 ))
             }
             ["k8s", "clusterrole", role_name] if val(role_name) => {
-                Some(K8sResourceAddress::ClusterRole(strip(role_name).to_string()))
+                Ok(K8sResourceAddress::ClusterRole(strip(role_name).to_string()))
             }
             ["k8s", "clusterrolebinding", role_name] if val(role_name) => {
-                Some(K8sResourceAddress::ClusterRoleBinding(strip(role_name).to_string()))
+                Ok(K8sResourceAddress::ClusterRoleBinding(strip(role_name).to_string()))
             }
-            _ => None,
-        };
-        Ok(res)
+            _ => Err(invalid_addr_path(path)),
+        }
     }
 
     fn to_path_buf(&self) -> PathBuf {

@@ -20,7 +20,7 @@ use crate::{
     op::K8sConnectorOp,
     util::{from_str_option, strip_boring_fields},
 };
-use std::path::Path;
+use std::{ffi::OsString, path::Path};
 
 use super::K8sConnector;
 
@@ -87,13 +87,12 @@ impl K8sConnector {
     pub async fn do_plan(
         &self,
         addr: &Path,
-        current: Option<String>,
-        desired: Option<String>,
+        current: Option<OsString>,
+        desired: Option<OsString>,
     ) -> Result<Vec<OpPlanOutput>, anyhow::Error> {
         let mut res = Vec::new();
-        let Ok(Some(addr)) = K8sResourceAddress::from_path(addr) else {
-            return Ok(Vec::new());
-        };
+        let addr = K8sResourceAddress::from_path(addr)?;
+
         let op = match addr {
             K8sResourceAddress::Namespace(name) => {
                 create_delete_patch!(Namespace, name, current, desired)

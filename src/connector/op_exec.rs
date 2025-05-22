@@ -92,9 +92,8 @@ macro_rules! create_delete_patch {
 
 impl K8sConnector {
     pub async fn do_op_exec(&self, addr: &Path, op: &str) -> Result<OpExecOutput, anyhow::Error> {
-        let Some(addr) = K8sResourceAddress::from_path(addr)? else {
-            bail!("Invalid addr for K8sConnector::op_exec(): {:?}", addr);
-        };
+        let addr = K8sResourceAddress::from_path(addr)?;
+
         let op = K8sConnectorOp::from_str(op)?;
 
         let output = match &addr {

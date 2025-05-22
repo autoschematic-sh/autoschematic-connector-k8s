@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::{ffi::{OsStr, OsString}, os::unix::ffi::OsStrExt, path::{Path, PathBuf}};
 
 use async_trait::async_trait;
 use autoschematic_core::{
@@ -57,7 +57,7 @@ impl Connector for K8sConnector {
     }
 
     async fn filter(&self, addr: &Path) -> Result<bool, anyhow::Error> {
-        if let Some(_) = K8sResourceAddress::from_path(addr)? {
+        if let Ok(_) = K8sResourceAddress::from_path(addr) {
             Ok(true)
         } else {
             Ok(false)
@@ -75,8 +75,8 @@ impl Connector for K8sConnector {
     async fn plan(
         &self,
         addr: &Path,
-        current: Option<String>,
-        desired: Option<String>,
+        current: Option<OsString>,
+        desired: Option<OsString>,
     ) -> Result<Vec<OpPlanOutput>, anyhow::Error> {
         self.do_plan(addr, current, desired).await
     }
@@ -85,10 +85,8 @@ impl Connector for K8sConnector {
         self.do_op_exec(addr, op).await
     }
 
-    async fn eq(&self, addr: &Path, a: &str, b: &str) -> Result<bool, anyhow::Error> {
-        let Ok(Some(addr)) = K8sResourceAddress::from_path(addr) else {
-            return Ok(false);
-        };
+    async fn eq(&self, addr: &Path, a: &OsStr, b: &OsStr) -> Result<bool, anyhow::Error> {
+        let addr = K8sResourceAddress::from_path(addr)?;
 
         match addr {
             K8sResourceAddress::Namespace(_) => ron_check_eq::<Namespace>(a, b),
@@ -106,10 +104,8 @@ impl Connector for K8sConnector {
         }
     }
 
-    async fn diag(&self, addr: &Path, a: &str) -> Result<DiagnosticOutput, anyhow::Error> {
-        let Ok(Some(addr)) = K8sResourceAddress::from_path(addr) else {
-            return Ok(DiagnosticOutput::default());
-        };
+    async fn diag(&self, addr: &Path, a: &OsStr) -> Result<DiagnosticOutput, anyhow::Error> {
+        let addr = K8sResourceAddress::from_path(addr)?;
 
         match addr {
             K8sResourceAddress::Namespace(_) => ron_check_syntax::<Namespace>(a),
