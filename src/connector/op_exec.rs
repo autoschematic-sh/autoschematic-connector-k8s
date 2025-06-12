@@ -2,7 +2,7 @@ use anyhow::bail;
 use autoschematic_core::{
     connector::{Connector, ConnectorOp, ConnectorOutbox, GetResourceOutput, OpExecOutput, OpPlanOutput, ResourceAddress},
     connector_op, op_exec_output,
-    util::{diff_ron_values, ron_check_eq, ron_check_syntax, PrettyConfig, RON},
+    util::{PrettyConfig, RON, diff_ron_values, ron_check_eq, ron_check_syntax},
 };
 use k8s_openapi::api::{
     apps::v1::Deployment,
@@ -10,9 +10,9 @@ use k8s_openapi::api::{
     rbac::v1::{ClusterRole, ClusterRoleBinding, Role, RoleBinding},
 };
 use kube::{
+    Api, Client,
     api::{DeleteParams, ListParams, PatchParams, PostParams},
     runtime::reflector::Lookup,
-    Api, Client,
 };
 use serde::Serialize;
 
@@ -96,42 +96,50 @@ impl K8sConnector {
 
         let op = K8sConnectorOp::from_str(op)?;
 
+        let client = {
+            let Some(ref client) = *self.client.lock().await else {
+                bail!("Client not set!");
+            };
+
+            client.clone()
+        };
+
         let output = match &addr {
             K8sResourceAddress::Namespace(name) => {
-                create_delete_patch!(Namespace, name, self.client.clone(), op)
+                create_delete_patch!(Namespace, name, client.clone(), op)
             }
             K8sResourceAddress::Pod(namespace, name) => {
-                create_delete_patch!(Pod, namespace, name, self.client.clone(), op)
+                create_delete_patch!(Pod, namespace, name, client.clone(), op)
             }
             K8sResourceAddress::Service(namespace, name) => {
-                create_delete_patch!(Service, namespace, name, self.client.clone(), op)
+                create_delete_patch!(Service, namespace, name, client.clone(), op)
             }
             K8sResourceAddress::Deployment(namespace, name) => {
-                create_delete_patch!(Deployment, namespace, name, self.client.clone(), op)
+                create_delete_patch!(Deployment, namespace, name, client.clone(), op)
             }
             K8sResourceAddress::ConfigMap(namespace, name) => {
-                create_delete_patch!(ConfigMap, namespace, name, self.client.clone(), op)
+                create_delete_patch!(ConfigMap, namespace, name, client.clone(), op)
             }
             K8sResourceAddress::Secret(namespace, name) => {
-                create_delete_patch!(Secret, namespace, name, self.client.clone(), op)
+                create_delete_patch!(Secret, namespace, name, client.clone(), op)
             }
             K8sResourceAddress::PersistentVolumeClaim(namespace, name) => {
-                create_delete_patch!(PersistentVolumeClaim, namespace, name, self.client.clone(), op)
+                create_delete_patch!(PersistentVolumeClaim, namespace, name, client.clone(), op)
             }
             K8sResourceAddress::PersistentVolume(name) => {
-                create_delete_patch!(PersistentVolume, name, self.client.clone(), op)
+                create_delete_patch!(PersistentVolume, name, client.clone(), op)
             }
             K8sResourceAddress::Role(namespace, name) => {
-                create_delete_patch!(Role, namespace, name, self.client.clone(), op)
+                create_delete_patch!(Role, namespace, name, client.clone(), op)
             }
             K8sResourceAddress::RoleBinding(namespace, name) => {
-                create_delete_patch!(RoleBinding, namespace, name, self.client.clone(), op)
+                create_delete_patch!(RoleBinding, namespace, name, client.clone(), op)
             }
             K8sResourceAddress::ClusterRole(name) => {
-                create_delete_patch!(ClusterRole, name, self.client.clone(), op)
+                create_delete_patch!(ClusterRole, name, client.clone(), op)
             }
             K8sResourceAddress::ClusterRoleBinding(name) => {
-                create_delete_patch!(ClusterRoleBinding, name, self.client.clone(), op)
+                create_delete_patch!(ClusterRoleBinding, name, client.clone(), op)
             }
         };
 

@@ -1,5 +1,3 @@
-use std::{ffi::OsString, ops::Deref, os::unix::ffi::OsStrExt};
-
 use autoschematic_core::{
     connector::GetResourceOutput,
     util::{PrettyConfig, RON},
@@ -15,13 +13,13 @@ pub fn strip_boring_fields(meta: &mut ObjectMeta) {
     meta.uid = None;
 }
 
-pub fn from_str_option<'a, T>(s: &'a Option<OsString>) -> anyhow::Result<Option<T>>
+pub fn from_str_option<'a, T>(s: &'a Option<Vec<u8>>) -> anyhow::Result<Option<T>>
 where
     T: serde::Deserialize<'a>,
 {
     match &s {
         Some(s) => {
-            let s = str::from_utf8(s.as_bytes())?;
+            let s = str::from_utf8(s)?;
             Ok(Some(RON.from_str(s)?))
         }
         None => Ok(None),

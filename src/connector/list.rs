@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use anyhow::bail;
 use autoschematic_core::connector::ResourceAddress;
 use k8s_openapi::api::{
     apps::v1::Deployment,
@@ -34,26 +35,33 @@ macro_rules! list {
 
 impl K8sConnector {
     pub async fn do_list(&self, subpath: &Path) -> Result<Vec<PathBuf>, anyhow::Error> {
+        let client = {
+            let Some(ref client) = *self.client.lock().await else {
+                bail!("Client not set!");
+            };
+
+            client.clone()
+        };
         let mut res = Vec::new();
-        let nss: Api<Namespace> = Api::all(self.client.clone());
+        let nss: Api<Namespace> = Api::all(client.clone());
         let namespaces = nss.list_metadata(&ListParams::default()).await?;
 
-        list!(self.client.clone(), res, ClusterRole);
-        list!(self.client.clone(), res, ClusterRoleBinding);
-        list!(self.client.clone(), res, PersistentVolume);
+        list!(client.clone(), res, ClusterRole);
+        list!(client.clone(), res, ClusterRoleBinding);
+        list!(client.clone(), res, PersistentVolume);
 
         for namespace in namespaces.items {
             let Some(namespace_name) = namespace.name() else { continue };
             res.push(K8sResourceAddress::Namespace(namespace_name.to_string()).to_path_buf());
 
-            list!(self.client.clone(), res, Pod, namespace_name);
-            list!(self.client.clone(), res, Service, namespace_name);
-            list!(self.client.clone(), res, Deployment, namespace_name);
-            list!(self.client.clone(), res, ConfigMap, namespace_name);
-            list!(self.client.clone(), res, Secret, namespace_name);
-            list!(self.client.clone(), res, PersistentVolumeClaim, namespace_name);
-            list!(self.client.clone(), res, Role, namespace_name);
-            list!(self.client.clone(), res, RoleBinding, namespace_name);
+            list!(client.clone(), res, Pod, namespace_name);
+            list!(client.clone(), res, Service, namespace_name);
+            list!(client.clone(), res, Deployment, namespace_name);
+            list!(client.clone(), res, ConfigMap, namespace_name);
+            list!(client.clone(), res, Secret, namespace_name);
+            list!(client.clone(), res, PersistentVolumeClaim, namespace_name);
+            list!(client.clone(), res, Role, namespace_name);
+            list!(client.clone(), res, RoleBinding, namespace_name);
         }
 
         Ok(res)

@@ -1,7 +1,7 @@
 use autoschematic_core::{
     connector::{Connector, ConnectorOp, ConnectorOutbox, GetResourceOutput, OpExecOutput, OpPlanOutput, ResourceAddress},
     connector_op,
-    util::{diff_ron_values, ron_check_eq, ron_check_syntax, PrettyConfig, RON},
+    util::{PrettyConfig, RON, diff_ron_values, ron_check_eq, ron_check_syntax},
 };
 use k8s_openapi::api::{
     apps::v1::Deployment,
@@ -9,9 +9,9 @@ use k8s_openapi::api::{
     rbac::v1::{ClusterRole, ClusterRoleBinding, Role, RoleBinding},
 };
 use kube::{
+    Api, Client,
     api::{ListParams, PatchParams, PostParams},
     runtime::reflector::Lookup,
-    Api, Client,
 };
 use serde::Serialize;
 
@@ -20,7 +20,7 @@ use crate::{
     op::K8sConnectorOp,
     util::{from_str_option, strip_boring_fields},
 };
-use std::{ffi::OsString, path::Path};
+use std::path::Path;
 
 use super::K8sConnector;
 
@@ -87,8 +87,8 @@ impl K8sConnector {
     pub async fn do_plan(
         &self,
         addr: &Path,
-        current: Option<OsString>,
-        desired: Option<OsString>,
+        current: Option<Vec<u8>>,
+        desired: Option<Vec<u8>>,
     ) -> Result<Vec<OpPlanOutput>, anyhow::Error> {
         let mut res = Vec::new();
         let addr = K8sResourceAddress::from_path(addr)?;

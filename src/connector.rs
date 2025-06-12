@@ -1,13 +1,13 @@
-use std::{ffi::{OsStr, OsString}, os::unix::ffi::OsStrExt, path::{Path, PathBuf}};
+use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use autoschematic_core::{
-    connector::{Connector, ConnectorOutbox, GetResourceOutput, OpExecOutput, OpPlanOutput, ResourceAddress},
+    connector::{Connector, ConnectorOutbox, FilterOutput, GetResourceOutput, OpExecOutput, OpPlanOutput, ResourceAddress},
     diag::DiagnosticOutput,
     error::{AutoschematicError, AutoschematicErrorType},
     get_resource_output,
     tarpc_bridge::TarpcConnector,
-    util::{ron_check_eq, ron_check_syntax, PrettyConfig, RON},
+    util::{PrettyConfig, RON, ron_check_eq, ron_check_syntax},
 };
 use k8s_openapi::api::{
     apps::v1::Deployment,
@@ -15,6 +15,7 @@ use k8s_openapi::api::{
 };
 use kube::Client;
 use serde::Serialize;
+use tokio::sync::Mutex;
 
 use crate::{addr::K8sResourceAddress, util::strip_boring_fields};
 
@@ -31,7 +32,7 @@ pub enum SerMode {
 pub struct K8sConnector {
     // outbox: ConnectorOutbox,
     // pub name: String,
-    client: Client,
+    client: Mutex<Option<Client>>,
     prefix: PathBuf,
 }
 
@@ -48,19 +49,22 @@ impl Connector for K8sConnector {
             .into());
         }
 
-        let client = Client::try_default().await?;
-
         Ok(Box::new(K8sConnector {
-            client,
+            client: Mutex::new(None),
             prefix: prefix.into(),
         }))
     }
 
-    async fn filter(&self, addr: &Path) -> Result<bool, anyhow::Error> {
+    async fn init(&self) -> anyhow::Result<()> {
+        *self.client.lock().await = Some(Client::try_default().await?);
+        Ok(())
+    }
+
+    async fn filter(&self, addr: &Path) -> Result<FilterOutput, anyhow::Error> {
         if let Ok(_) = K8sResourceAddress::from_path(addr) {
-            Ok(true)
+            Ok(FilterOutput::Resource)
         } else {
-            Ok(false)
+            Ok(FilterOutput::None)
         }
     }
 
@@ -75,8 +79,8 @@ impl Connector for K8sConnector {
     async fn plan(
         &self,
         addr: &Path,
-        current: Option<OsString>,
-        desired: Option<OsString>,
+        current: Option<Vec<u8>>,
+        desired: Option<Vec<u8>>,
     ) -> Result<Vec<OpPlanOutput>, anyhow::Error> {
         self.do_plan(addr, current, desired).await
     }
@@ -85,7 +89,7 @@ impl Connector for K8sConnector {
         self.do_op_exec(addr, op).await
     }
 
-    async fn eq(&self, addr: &Path, a: &OsStr, b: &OsStr) -> Result<bool, anyhow::Error> {
+    async fn eq(&self, addr: &Path, a: &[u8], b: &[u8]) -> Result<bool, anyhow::Error> {
         let addr = K8sResourceAddress::from_path(addr)?;
 
         match addr {
@@ -104,7 +108,7 @@ impl Connector for K8sConnector {
         }
     }
 
-    async fn diag(&self, addr: &Path, a: &OsStr) -> Result<DiagnosticOutput, anyhow::Error> {
+    async fn diag(&self, addr: &Path, a: &[u8]) -> Result<DiagnosticOutput, anyhow::Error> {
         let addr = K8sResourceAddress::from_path(addr)?;
 
         match addr {
@@ -124,5 +128,4 @@ impl Connector for K8sConnector {
     }
 }
 
-impl K8sConnector {
-}
+impl K8sConnector {}

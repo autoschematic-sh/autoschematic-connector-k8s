@@ -2,7 +2,10 @@ use std::path::{Path, PathBuf};
 
 #[cfg(feature = "fuzz")]
 use arbitrary::Arbitrary;
-use autoschematic_core::{connector::ResourceAddress, error_util::{invalid_addr, invalid_addr_path}};
+use autoschematic_core::{
+    connector::ResourceAddress,
+    error_util::{invalid_addr, invalid_addr_path},
+};
 
 type Namespace = String;
 type Name = String;

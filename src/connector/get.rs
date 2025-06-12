@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use anyhow::bail;
 use autoschematic_core::connector::{GetResourceOutput, ResourceAddress};
 use k8s_openapi::api::{
     apps::v1::Deployment,
@@ -45,8 +46,14 @@ impl K8sConnector {
     pub async fn do_get(&self, addr: &Path) -> Result<Option<GetResourceOutput>, anyhow::Error> {
         let addr = K8sResourceAddress::from_path(addr)?;
 
-        // Ok(None)
-        let client = self.client.clone();
+        let client = {
+            let Some(ref client) = *self.client.lock().await else {
+                bail!("Client not set!");
+            };
+
+            client.clone()
+        };
+
         match addr {
             K8sResourceAddress::Namespace(name) => get!(client, Namespace, name),
 
