@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::{path::{Path, PathBuf}, sync::Arc};
 
 use async_trait::async_trait;
 use autoschematic_core::{
@@ -38,7 +38,7 @@ pub struct K8sConnector {
 
 #[async_trait]
 impl Connector for K8sConnector {
-    async fn new(name: &str, prefix: &Path, outbox: ConnectorOutbox) -> Result<Box<dyn Connector>, anyhow::Error>
+    async fn new(name: &str, prefix: &Path, outbox: ConnectorOutbox) -> Result<Arc<dyn Connector>, anyhow::Error>
     where
         Self: Sized,
     {
@@ -49,7 +49,7 @@ impl Connector for K8sConnector {
             .into());
         }
 
-        Ok(Box::new(K8sConnector {
+        Ok(Arc::new(K8sConnector {
             client: Mutex::new(None),
             prefix: prefix.into(),
         }))
