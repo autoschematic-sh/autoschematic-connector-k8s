@@ -1,5 +1,7 @@
 [package]
 name = "autoschematic-connector-k8s"
+description = "An Autoschematic connector for declaratively managing Kubernetes resources."
+license = "MIT"
 version = "0.6.1"
 edition = "2024"
 
