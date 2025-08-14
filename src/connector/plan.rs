@@ -1,5 +1,7 @@
 use autoschematic_core::{
-    connector::{Connector, ConnectorOp, ConnectorOutbox, GetResourceOutput, OpExecOutput, OpPlanOutput, ResourceAddress},
+    connector::{
+        Connector, ConnectorOp, ConnectorOutbox, GetResourceResponse, OpExecResponse, PlanResponseElement, ResourceAddress,
+    },
     connector_op,
     util::{PrettyConfig, RON, diff_ron_values, ron_check_eq, ron_check_syntax},
 };
@@ -16,7 +18,7 @@ use kube::{
 use serde::Serialize;
 
 use crate::{
-    addr::K8sResourceAddress,
+    addr::{K8sClusterAddress, K8sResourceAddress},
     op::K8sConnectorOp,
     util::{from_str_option, strip_boring_fields},
 };
@@ -29,19 +31,15 @@ macro_rules! create_delete_patch {
         let current: Option<$type> = from_str_option(&$current)?;
         let desired: Option<$type> = from_str_option(&$desired)?;
         match (current, desired) {
-            (None, Some(desired)) => {
-                Some(connector_op!(
-                    K8sConnectorOp::Create(RON.to_string(&desired)?),
-                    format!("Create {} {}", stringify!($type), $name)
-                ))
-            }
+            (None, Some(desired)) => Some(connector_op!(
+                K8sConnectorOp::Create(RON.to_string(&desired)?),
+                format!("Create {} {}", stringify!($type), $name)
+            )),
 
-            (Some(_), None) => {
-                Some(connector_op!(
-                    K8sConnectorOp::Delete,
-                    format!("Delete {} {}", stringify!($type), $name)
-                ))
-            }
+            (Some(_), None) => Some(connector_op!(
+                K8sConnectorOp::Delete,
+                format!("Delete {} {}", stringify!($type), $name)
+            )),
 
             (Some(current), Some(desired)) => {
                 let diff = diff_ron_values(&current, &desired)?;
@@ -57,19 +55,15 @@ macro_rules! create_delete_patch {
         let current: Option<$type> = from_str_option(&$current)?;
         let desired: Option<$type> = from_str_option(&$desired)?;
         match (current, desired) {
-            (None, Some(desired)) => {
-                Some(connector_op!(
-                    K8sConnectorOp::Create(RON.to_string(&desired)?),
-                    format!("Create {} {}/{}", stringify!($type), $namespace, $name)
-                ))
-            }
+            (None, Some(desired)) => Some(connector_op!(
+                K8sConnectorOp::Create(RON.to_string(&desired)?),
+                format!("Create {} {}/{}", stringify!($type), $namespace, $name)
+            )),
 
-            (Some(_), None) => {
-                Some(connector_op!(
-                    K8sConnectorOp::Delete,
-                    format!("Delete {} {}/{}", stringify!($type), $namespace, $name)
-                ))
-            }
+            (Some(_), None) => Some(connector_op!(
+                K8sConnectorOp::Delete,
+                format!("Delete {} {}/{}", stringify!($type), $namespace, $name)
+            )),
 
             (Some(current), Some(desired)) => {
                 let diff = diff_ron_values(&current, &desired)?;
@@ -89,11 +83,11 @@ impl K8sConnector {
         addr: &Path,
         current: Option<Vec<u8>>,
         desired: Option<Vec<u8>>,
-    ) -> Result<Vec<OpPlanOutput>, anyhow::Error> {
+    ) -> Result<Vec<PlanResponseElement>, anyhow::Error> {
         let mut res = Vec::new();
-        let addr = K8sResourceAddress::from_path(addr)?;
+        let addr = K8sClusterAddress::from_path(addr)?;
 
-        let op = match addr {
+        let op = match addr.res_addr {
             K8sResourceAddress::Namespace(name) => {
                 create_delete_patch!(Namespace, name, current, desired)
             }
@@ -109,9 +103,9 @@ impl K8sConnector {
             K8sResourceAddress::ConfigMap(namespace, name) => {
                 create_delete_patch!(ConfigMap, namespace, name, current, desired)
             }
-            K8sResourceAddress::Secret(namespace, name) => {
-                create_delete_patch!(Secret, namespace, name, current, desired)
-            }
+            // K8sResourceAddress::Secret(namespace, name) => {
+            //     create_delete_patch!(Secret, namespace, name, current, desired)
+            // }
             K8sResourceAddress::PersistentVolumeClaim(namespace, name) => {
                 create_delete_patch!(PersistentVolumeClaim, namespace, name, current, desired)
             }
@@ -130,6 +124,14 @@ impl K8sConnector {
             K8sResourceAddress::ClusterRoleBinding(name) => {
                 create_delete_patch!(ClusterRoleBinding, name, current, desired)
             }
+            K8sResourceAddress::Binding(_, _) => todo!(),
+            K8sResourceAddress::Endpoints(_, _) => todo!(),
+            K8sResourceAddress::LimitRange(_, _) => todo!(),
+            K8sResourceAddress::Node(_, _) => todo!(),
+            K8sResourceAddress::PodTemplate(_, _) => todo!(),
+            K8sResourceAddress::ReplicationController(_, _) => todo!(),
+            K8sResourceAddress::ResourceQuota(_, _) => todo!(),
+            K8sResourceAddress::ServiceAccount(_, _) => todo!(),
         };
 
         if let Some(op) = op {

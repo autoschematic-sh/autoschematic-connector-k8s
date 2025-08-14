@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use autoschematic_core::{
-    connector::{Connector, ConnectorOutbox, GetResourceOutput, OpExecOutput, OpPlanOutput},
+    connector::{Connector, ConnectorOutbox, GetResourceResponse, OpExecResponse, PlanResponseElement},
     tarpc_bridge::{init_server, tarpc_connector_main},
 };
 use connector::K8sConnector;

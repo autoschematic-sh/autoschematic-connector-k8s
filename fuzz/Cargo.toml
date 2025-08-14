@@ -9,7 +9,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-autoschematic-core = { path = "../../../autoschematic/autoschematic-core", version = "0.6.1" }
+autoschematic-core = { path = "../../../autoschematic/autoschematic-core", version = "0.8.0" }
 
 [dependencies.autoschematic-connector-k8s]
 path = ".."

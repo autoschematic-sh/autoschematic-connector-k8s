@@ -1,6 +1,6 @@
 #![no_main]
 
-use autoschematic_connector_k8s::addr::K8sResourceAddress;
+use crate::addr::K8sResourceAddress;
 use autoschematic_core::connector::ResourceAddress;
 use libfuzzer_sys::fuzz_target;
 

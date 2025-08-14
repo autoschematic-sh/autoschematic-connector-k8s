@@ -1,10 +1,12 @@
 use autoschematic_core::{
-    connector::GetResourceOutput,
+    connector::GetResourceResponse,
     util::{PrettyConfig, RON},
 };
 use kube::api::ObjectMeta;
 use ron::de;
 use serde::{Deserialize, Serialize};
+
+use crate::connector::SerdeBackend;
 
 pub fn strip_boring_fields(meta: &mut ObjectMeta) {
     meta.creation_timestamp = None;
@@ -13,6 +15,8 @@ pub fn strip_boring_fields(meta: &mut ObjectMeta) {
     meta.uid = None;
 }
 
+pub const SERDE: SerdeBackend = SerdeBackend::YAML;
+
 pub fn from_str_option<'a, T>(s: &'a Option<Vec<u8>>) -> anyhow::Result<Option<T>>
 where
     T: serde::Deserialize<'a>,
@@ -20,15 +24,15 @@ where
     match &s {
         Some(s) => {
             let s = str::from_utf8(s)?;
-            Ok(Some(RON.from_str(s)?))
+            Ok(Some(SERDE.from_str(s)?))
         }
         None => Ok(None),
     }
 }
 
-pub fn get_ser_resource_output<T: Serialize>(t: &T) -> anyhow::Result<Option<GetResourceOutput>> {
-    Ok(Some(GetResourceOutput {
-        resource_definition: RON.to_string_pretty(t, PrettyConfig::default())?.into(),
+pub fn get_ser_resource_output<T: Serialize>(t: &T) -> anyhow::Result<Option<GetResourceResponse>> {
+    Ok(Some(GetResourceResponse {
+        resource_definition: SERDE.to_string(t)?.into_bytes(),
         outputs: None,
     }))
 }
