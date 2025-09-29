@@ -135,14 +135,14 @@ impl K8sConnector {
             K8sResourceAddress::ClusterRoleBinding(name) => {
                 create_delete_patch!(ClusterRoleBinding, name, client, op)
             }
-            K8sResourceAddress::Binding(_, _) => todo!(),
-            K8sResourceAddress::Endpoints(_, _) => todo!(),
-            K8sResourceAddress::LimitRange(_, _) => todo!(),
-            K8sResourceAddress::Node(_, _) => todo!(),
-            K8sResourceAddress::PodTemplate(_, _) => todo!(),
-            K8sResourceAddress::ReplicationController(_, _) => todo!(),
-            K8sResourceAddress::ResourceQuota(_, _) => todo!(),
-            K8sResourceAddress::ServiceAccount(_, _) => todo!(),
+            // K8sResourceAddress::Binding(_, _) => todo!(),
+            // K8sResourceAddress::Endpoints(_, _) => todo!(),
+            // K8sResourceAddress::LimitRange(_, _) => todo!(),
+            // K8sResourceAddress::Node(_, _) => todo!(),
+            // K8sResourceAddress::PodTemplate(_, _) => todo!(),
+            // K8sResourceAddress::ReplicationController(_, _) => todo!(),
+            // K8sResourceAddress::ResourceQuota(_, _) => todo!(),
+            // K8sResourceAddress::ServiceAccount(_, _) => todo!(),
         };
 
         Ok(output)

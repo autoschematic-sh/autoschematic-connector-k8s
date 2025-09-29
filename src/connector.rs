@@ -115,7 +115,6 @@ impl Connector for K8sConnector {
     where
         Self: Sized,
     {
-        eprintln!("new()");
         if name != "k8s" {
             return Err(AutoschematicError {
                 kind: AutoschematicErrorType::InvalidConnectorString(name.to_string()),
@@ -130,7 +129,6 @@ impl Connector for K8sConnector {
     }
 
     async fn init(&self) -> anyhow::Result<()> {
-        eprintln!("init()");
         // *self.client.lock().await = Some(Client::try_default().await?);
         Ok(())
     }
@@ -180,14 +178,14 @@ impl Connector for K8sConnector {
             K8sResourceAddress::RoleBinding(_, _) => ron_check_eq::<PersistentVolume>(a, b),
             K8sResourceAddress::ClusterRole(_) => ron_check_eq::<PersistentVolume>(a, b),
             K8sResourceAddress::ClusterRoleBinding(_) => ron_check_eq::<PersistentVolume>(a, b),
-            K8sResourceAddress::Binding(_, _) => todo!(),
-            K8sResourceAddress::Endpoints(_, _) => todo!(),
-            K8sResourceAddress::LimitRange(_, _) => todo!(),
-            K8sResourceAddress::Node(_, _) => todo!(),
-            K8sResourceAddress::PodTemplate(_, _) => todo!(),
-            K8sResourceAddress::ReplicationController(_, _) => todo!(),
-            K8sResourceAddress::ResourceQuota(_, _) => todo!(),
-            K8sResourceAddress::ServiceAccount(_, _) => todo!(),
+            // K8sResourceAddress::Binding(_, _) => todo!(),
+            // K8sResourceAddress::Endpoints(_, _) => todo!(),
+            // K8sResourceAddress::LimitRange(_, _) => todo!(),
+            // K8sResourceAddress::Node(_, _) => todo!(),
+            // K8sResourceAddress::PodTemplate(_, _) => todo!(),
+            // K8sResourceAddress::ReplicationController(_, _) => todo!(),
+            // K8sResourceAddress::ResourceQuota(_, _) => todo!(),
+            // K8sResourceAddress::ServiceAccount(_, _) => todo!(),
         }
     }
 
@@ -207,14 +205,14 @@ impl Connector for K8sConnector {
             K8sResourceAddress::RoleBinding(_, _) => ron_check_syntax::<PersistentVolume>(a),
             K8sResourceAddress::ClusterRole(_) => ron_check_syntax::<PersistentVolume>(a),
             K8sResourceAddress::ClusterRoleBinding(_) => ron_check_syntax::<PersistentVolume>(a),
-            K8sResourceAddress::Binding(_, _) => todo!(),
-            K8sResourceAddress::Endpoints(_, _) => todo!(),
-            K8sResourceAddress::LimitRange(_, _) => todo!(),
-            K8sResourceAddress::Node(_, _) => todo!(),
-            K8sResourceAddress::PodTemplate(_, _) => todo!(),
-            K8sResourceAddress::ReplicationController(_, _) => todo!(),
-            K8sResourceAddress::ResourceQuota(_, _) => todo!(),
-            K8sResourceAddress::ServiceAccount(_, _) => todo!(),
+            // K8sResourceAddress::Binding(_, _) => todo!(),
+            // K8sResourceAddress::Endpoints(_, _) => todo!(),
+            // K8sResourceAddress::LimitRange(_, _) => todo!(),
+            // K8sResourceAddress::Node(_, _) => todo!(),
+            // K8sResourceAddress::PodTemplate(_, _) => todo!(),
+            // K8sResourceAddress::ReplicationController(_, _) => todo!(),
+            // K8sResourceAddress::ResourceQuota(_, _) => todo!(),
+            // K8sResourceAddress::ServiceAccount(_, _) => todo!(),
         }
     }
 }

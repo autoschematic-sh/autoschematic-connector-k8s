@@ -26,15 +26,15 @@ pub enum K8sResourceAddress {
     ClusterRole(Name),
     ClusterRoleBinding(Name),
 
-    Binding(Namespace, Name),
-    Endpoints(Namespace, Name),
-    LimitRange(Namespace, Name),
-    Node(Namespace, Name),
+    // Binding(Namespace, Name),
+    // Endpoints(Namespace, Name),
+    // LimitRange(Namespace, Name),
+    // Node(Namespace, Name),
 
-    PodTemplate(Namespace, Name),
-    ReplicationController(Namespace, Name),
-    ResourceQuota(Namespace, Name),
-    ServiceAccount(Namespace, Name),
+    // PodTemplate(Namespace, Name),
+    // ReplicationController(Namespace, Name),
+    // ResourceQuota(Namespace, Name),
+    // ServiceAccount(Namespace, Name),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -114,7 +114,9 @@ impl ResourceAddress for K8sClusterAddress {
         let cluster = &self.cluster;
         match &self.res_addr {
             K8sResourceAddress::Namespace(namespace) => PathBuf::from(format!("k8s/{cluster}/ns/{}/ns.yaml", namespace)),
-            K8sResourceAddress::Pod(namespace, pod) => PathBuf::from(format!("k8s/{cluster}/ns/{}/pod/{}.yaml", namespace, pod)),
+            K8sResourceAddress::Pod(namespace, pod) => {
+                PathBuf::from(format!("k8s/{cluster}/ns/{}/pod/{}.yaml", namespace, pod))
+            }
             K8sResourceAddress::Service(namespace, service) => {
                 PathBuf::from(format!("k8s/{cluster}/ns/{}/service/{}.yaml", namespace, service))
             }
@@ -141,16 +143,16 @@ impl ResourceAddress for K8sClusterAddress {
             K8sResourceAddress::ClusterRoleBinding(name) => {
                 PathBuf::from(format!("k8s/{cluster}/clusterrolebinding/{}.yaml", name))
             }
-            K8sResourceAddress::Binding(namespace, name) => {
-                PathBuf::from(format!("k8s/{cluster}/ns/{}/binding/{}.yaml", namespace, name))
-            }
-            K8sResourceAddress::Endpoints(_, _) => todo!(),
-            K8sResourceAddress::LimitRange(_, _) => todo!(),
-            K8sResourceAddress::Node(_, _) => todo!(),
-            K8sResourceAddress::PodTemplate(_, _) => todo!(),
-            K8sResourceAddress::ReplicationController(_, _) => todo!(),
-            K8sResourceAddress::ResourceQuota(_, _) => todo!(),
-            K8sResourceAddress::ServiceAccount(_, _) => todo!(),
+            // K8sResourceAddress::Binding(namespace, name) => {
+            //     PathBuf::from(format!("k8s/{cluster}/ns/{}/binding/{}.yaml", namespace, name))
+            // }
+            // K8sResourceAddress::Endpoints(_, _) => todo!(),
+            // K8sResourceAddress::LimitRange(_, _) => todo!(),
+            // K8sResourceAddress::Node(_, _) => todo!(),
+            // K8sResourceAddress::PodTemplate(_, _) => todo!(),
+            // K8sResourceAddress::ReplicationController(_, _) => todo!(),
+            // K8sResourceAddress::ResourceQuota(_, _) => todo!(),
+            // K8sResourceAddress::ServiceAccount(_, _) => todo!(),
         }
     }
 }

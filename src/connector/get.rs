@@ -62,14 +62,14 @@ impl K8sConnector {
             K8sResourceAddress::PersistentVolume(name) => get!(client, PersistentVolume, name),
             K8sResourceAddress::ClusterRole(name) => get!(client, ClusterRole, name),
             K8sResourceAddress::ClusterRoleBinding(name) => get!(client, ClusterRoleBinding, name),
-            K8sResourceAddress::Binding(_, _) => todo!(),
-            K8sResourceAddress::Endpoints(_, _) => todo!(),
-            K8sResourceAddress::LimitRange(_, _) => todo!(),
-            K8sResourceAddress::Node(_, _) => todo!(),
-            K8sResourceAddress::PodTemplate(_, _) => todo!(),
-            K8sResourceAddress::ReplicationController(_, _) => todo!(),
-            K8sResourceAddress::ResourceQuota(_, _) => todo!(),
-            K8sResourceAddress::ServiceAccount(_, _) => todo!(),
+            // K8sResourceAddress::Binding(_, _) => todo!(),
+            // K8sResourceAddress::Endpoints(_, _) => todo!(),
+            // K8sResourceAddress::LimitRange(_, _) => todo!(),
+            // K8sResourceAddress::Node(_, _) => todo!(),
+            // K8sResourceAddress::PodTemplate(_, _) => todo!(),
+            // K8sResourceAddress::ReplicationController(_, _) => todo!(),
+            // K8sResourceAddress::ResourceQuota(_, _) => todo!(),
+            // K8sResourceAddress::ServiceAccount(_, _) => todo!(),
         }
     }
 }
