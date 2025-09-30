@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    borrow::Cow,
+    path::{Path, PathBuf},
+};
 
 use anyhow::bail;
 use autoschematic_core::connector::ResourceAddress;
@@ -45,6 +48,41 @@ macro_rules! list {
         }
     }};
 }
+macro_rules! list_filtered {
+    ($cluster:expr, $client:expr, $res:expr, $type:ident, $namespace:expr, $predicate:expr) => {{
+        let resources: Api<$type> = Api::namespaced($client.clone(), &$namespace);
+        for resource in resources.list_metadata(&ListParams::default()).await? {
+            let Some(name) = resource.name() else { continue };
+            if !$predicate(&name) {
+                continue;
+            }
+            $res.push(
+                K8sClusterAddress {
+                    cluster: $cluster.clone(),
+                    res_addr: K8sResourceAddress::$type($namespace.to_string(), name.to_string()),
+                }
+                .to_path_buf(),
+            );
+        }
+    }};
+
+    ($cluster:expr, $client:expr, $res:expr, $type:ident, $predicate:expr) => {{
+        let resources: Api<$type> = Api::all($client.clone());
+        for resource in resources.list_metadata(&ListParams::default()).await? {
+            let Some(name) = resource.name() else { continue };
+            if !$predicate(&name) {
+                continue;
+            }
+            $res.push(
+                K8sClusterAddress {
+                    cluster: $cluster.clone(),
+                    res_addr: K8sResourceAddress::$type(name.to_string()),
+                }
+                .to_path_buf(),
+            );
+        }
+    }};
+}
 
 impl K8sConnector {
     pub async fn do_list(&self, subpath: &Path) -> Result<Vec<PathBuf>, anyhow::Error> {
@@ -53,8 +91,12 @@ impl K8sConnector {
         for cluster in self.clusters()? {
             let client = (*self.get_or_init_client(&cluster).await?).clone();
 
-            list!(cluster, client, res, ClusterRole);
-            list!(cluster, client, res, ClusterRoleBinding);
+            list_filtered!(cluster, client, res, ClusterRole, |name: &Cow<str>| !name
+                .starts_with("system:"));
+
+            list_filtered!(cluster, client, res, ClusterRoleBinding, |name: &Cow<str>| !name
+                .starts_with("system:"));
+
             list!(cluster, client, res, PersistentVolume);
 
             let nss: Api<Namespace> = Api::all(client.clone());
@@ -76,8 +118,13 @@ impl K8sConnector {
                 list!(cluster, client, res, ConfigMap, namespace_name);
                 // list!(cluster, client, res, Secret, namespace_name);
                 list!(cluster, client, res, PersistentVolumeClaim, namespace_name);
-                list!(cluster, client, res, Role, namespace_name);
-                list!(cluster, client, res, RoleBinding, namespace_name);
+                // list!(cluster, client, res, Role, namespace_name);
+                // list!(cluster, client, res, RoleBinding, namespace_name);
+                list_filtered!(cluster, client, res, Role, namespace_name, |name: &Cow<str>| !name
+                    .starts_with("system:"));
+
+                list_filtered!(cluster, client, res, RoleBinding, namespace_name, |name: &Cow<str>| !name
+                    .starts_with("system:"));
             }
         }
 

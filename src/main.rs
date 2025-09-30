@@ -13,6 +13,7 @@ mod resource;
 mod op;
 mod op_impl;
 mod util;
+mod neat;
 
 #[tokio::main]
 pub async fn main() -> anyhow::Result<()> {

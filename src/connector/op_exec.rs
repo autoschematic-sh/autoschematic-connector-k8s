@@ -34,10 +34,20 @@ macro_rules! create_delete_patch {
     ($type:ty, $name:expr, $client:expr, $op:expr) => {{
         let api: Api<$type> = Api::all($client.clone());
 
+        let patch_params = PatchParams {
+            field_manager: Some(String::from("autoschematic")),
+            ..Default::default()
+        };
+
+        let post_params = PostParams {
+            field_manager: Some(String::from("autoschematic")),
+            ..Default::default()
+        };
+
         match $op {
             K8sConnectorOp::Create(resource) => {
                 let resource: $type = RON.from_str(&resource)?;
-                api.create(&PostParams::default(), &resource).await?;
+                api.create(&post_params, &resource).await?;
                 OpExecResponse {
                     outputs: None,
                     friendly_message: Some(format!("Created {} {}", stringify!($type), $name)),
@@ -45,7 +55,7 @@ macro_rules! create_delete_patch {
             }
             K8sConnectorOp::Patch(resource) => {
                 let resource: $type = RON.from_str(&resource)?;
-                api.patch($name, &PatchParams::default(), &kube::api::Patch::Apply(resource))
+                api.patch($name, &patch_params, &kube::api::Patch::Apply(resource))
                     .await?;
                 OpExecResponse {
                     outputs: None,
@@ -64,10 +74,20 @@ macro_rules! create_delete_patch {
     ($type:ty, $namespace:expr, $name:expr, $client:expr, $op:expr) => {{
         let api: Api<$type> = Api::namespaced($client.clone(), $namespace);
 
+        let patch_params = PatchParams {
+            field_manager: Some(String::from("autoschematic")),
+            ..Default::default()
+        };
+
+        let post_params = PostParams {
+            field_manager: Some(String::from("autoschematic")),
+            ..Default::default()
+        };
+
         match $op {
             K8sConnectorOp::Create(resource) => {
                 let resource: $type = RON.from_str(&resource)?;
-                api.create(&PostParams::default(), &resource).await?;
+                api.create(&post_params, &resource).await?;
                 OpExecResponse {
                     outputs: None,
                     friendly_message: Some(format!("Created {} {}", stringify!($type), $name)),
@@ -75,7 +95,7 @@ macro_rules! create_delete_patch {
             }
             K8sConnectorOp::Patch(resource) => {
                 let resource: $type = RON.from_str(&resource)?;
-                api.patch($name, &PatchParams::default(), &kube::api::Patch::Apply(resource))
+                api.patch($name, &patch_params, &kube::api::Patch::Apply(resource))
                     .await?;
                 OpExecResponse {
                     outputs: None,
@@ -134,15 +154,14 @@ impl K8sConnector {
             }
             K8sResourceAddress::ClusterRoleBinding(name) => {
                 create_delete_patch!(ClusterRoleBinding, name, client, op)
-            }
-            // K8sResourceAddress::Binding(_, _) => todo!(),
-            // K8sResourceAddress::Endpoints(_, _) => todo!(),
-            // K8sResourceAddress::LimitRange(_, _) => todo!(),
-            // K8sResourceAddress::Node(_, _) => todo!(),
-            // K8sResourceAddress::PodTemplate(_, _) => todo!(),
-            // K8sResourceAddress::ReplicationController(_, _) => todo!(),
-            // K8sResourceAddress::ResourceQuota(_, _) => todo!(),
-            // K8sResourceAddress::ServiceAccount(_, _) => todo!(),
+            } // K8sResourceAddress::Binding(_, _) => todo!(),
+              // K8sResourceAddress::Endpoints(_, _) => todo!(),
+              // K8sResourceAddress::LimitRange(_, _) => todo!(),
+              // K8sResourceAddress::Node(_, _) => todo!(),
+              // K8sResourceAddress::PodTemplate(_, _) => todo!(),
+              // K8sResourceAddress::ReplicationController(_, _) => todo!(),
+              // K8sResourceAddress::ResourceQuota(_, _) => todo!(),
+              // K8sResourceAddress::ServiceAccount(_, _) => todo!(),
         };
 
         Ok(output)

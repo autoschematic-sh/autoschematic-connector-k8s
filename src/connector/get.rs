@@ -7,7 +7,7 @@ use k8s_openapi::api::{
     core::v1::{ConfigMap, Namespace, PersistentVolume, PersistentVolumeClaim, Pod, Secret, Service},
     rbac::v1::{ClusterRole, ClusterRoleBinding, Role, RoleBinding},
 };
-use kube::{client::ClientBuilder, Api};
+use kube::{Api, client::ClientBuilder};
 
 use crate::{
     addr::{K8sClusterAddress, K8sResourceAddress},
@@ -30,14 +30,16 @@ macro_rules! match_res_namespaced {
 macro_rules! get {
     ($client:expr, $type:ident, $name:ident) => {{
         let resources: Api<$type> = Api::all($client);
-        let mut resource: $type = resources.get(&$name).await?;
-        strip_boring_fields(&mut resource.metadata);
+        let resource: Result<$type, kube::Error> = resources.get(&$name).await;
+        let Ok(resource) = resource else { return Ok(None) };
+        // strip_boring_fields(&mut resource.metadata);
         return get_ser_resource_output(&resource);
     }};
     ($client:expr, $type:ident, $namespace:expr, $name:expr) => {{
         let resources: Api<$type> = Api::namespaced($client, &$namespace);
-        let mut resource: $type = resources.get(&$name).await?;
-        strip_boring_fields(&mut resource.metadata);
+        let resource: Result<$type, kube::Error> = resources.get(&$name).await;
+        let Ok(resource) = resource else { return Ok(None) };
+        // strip_boring_fields(&mut resource.metadata);
         return get_ser_resource_output(&resource);
     }};
 }
@@ -45,9 +47,8 @@ macro_rules! get {
 impl K8sConnector {
     pub async fn do_get(&self, addr: &Path) -> Result<Option<GetResourceResponse>, anyhow::Error> {
         let addr = K8sClusterAddress::from_path(addr)?;
-        
+
         let client = (*self.get_or_init_client(&addr.cluster).await?).clone();
-        
 
         match addr.res_addr {
             K8sResourceAddress::Namespace(name) => get!(client, Namespace, name),

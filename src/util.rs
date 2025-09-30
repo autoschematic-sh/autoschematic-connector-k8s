@@ -6,7 +6,7 @@ use kube::api::ObjectMeta;
 use ron::de;
 use serde::{Deserialize, Serialize};
 
-use crate::connector::SerdeBackend;
+use crate::{connector::SerdeBackend, neat::neatify_resource};
 
 pub fn strip_boring_fields(meta: &mut ObjectMeta) {
     meta.creation_timestamp = None;
@@ -31,8 +31,12 @@ where
 }
 
 pub fn get_ser_resource_output<T: Serialize>(t: &T) -> anyhow::Result<Option<GetResourceResponse>> {
+
+    let mut v = serde_yaml::to_value(t)?;
+    neatify_resource(&mut v);
+
     Ok(Some(GetResourceResponse {
-        resource_definition: SERDE.to_string(t)?.into_bytes(),
+        resource_definition: SERDE.to_string(&v)?.into_bytes(),
         outputs: None,
     }))
 }

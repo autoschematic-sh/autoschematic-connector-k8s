@@ -2,7 +2,7 @@
 name = "autoschematic-connector-k8s"
 description = "An Autoschematic connector for declaratively managing Kubernetes resources."
 license = "MIT"
-version = "0.8.2"
+version = "0.9.0"
 edition = "2024"
 
 [[bin]]
@@ -14,7 +14,7 @@ fuzz = ["arbitrary"]
 [dependencies]
 anyhow = "1.0.95"
 async-trait = "0.1.86"
-autoschematic-core = { path = "../../autoschematic/autoschematic-core", version = "0.8.2" }
+autoschematic-core = { path = "../../autoschematic/autoschematic-core", version = "0.9.0" }
 ron = "0.11.0"
 serde = { version = "1.0.217", features = ["derive"] }
 thiserror = "2.0.11"
@@ -32,3 +32,4 @@ rustls = { version = "0.23.27", features = ["ring"] }
 arbitrary = { version = "1.4.1", optional = true, features = [
     "derive_arbitrary",
 ] }
+regex = "1.11.3"
