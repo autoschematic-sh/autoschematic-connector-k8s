@@ -1,15 +1,16 @@
 [package]
 name = "autoschematic-connector-k8s-fuzz"
 version = "0.0.0"
-publish = false
 edition = "2024"
+publish = false
+
 
 [package.metadata]
 cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-autoschematic-core = { path = "../../../autoschematic/autoschematic-core", version = "0.8.0" }
+autoschematic-core = { path = "../../../autoschematic/autoschematic-core", version = "0.11.0" }
 
 [dependencies.autoschematic-connector-k8s]
 path = ".."

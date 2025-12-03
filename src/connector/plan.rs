@@ -5,11 +5,15 @@ use autoschematic_core::{
     connector_op,
     util::{PrettyConfig, RON, diff_ron_values, ron_check_eq, ron_check_syntax},
 };
-use k8s_openapi::api::{
-    apps::v1::Deployment,
-    core::v1::{ConfigMap, Namespace, NamespaceSpec, PersistentVolume, PersistentVolumeClaim, Pod, Secret, Service},
-    rbac::v1::{ClusterRole, ClusterRoleBinding, Role, RoleBinding},
+use k8s_openapi::{
+    api::{
+        apps::v1::Deployment,
+        core::v1::{ConfigMap, Namespace, NamespaceSpec, PersistentVolume, PersistentVolumeClaim, Pod, Secret, Service},
+        rbac::v1::{ClusterRole, ClusterRoleBinding, Role, RoleBinding},
+    },
+    apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition,
 };
+use kube::api::DynamicObject;
 use kube::{
     Api, Client,
     api::{ListParams, PatchParams, PostParams},
@@ -123,6 +127,12 @@ impl K8sConnector {
             }
             K8sResourceAddress::ClusterRoleBinding(name) => {
                 create_delete_patch!(ClusterRoleBinding, name, current, desired)
+            }
+            K8sResourceAddress::CustomResourceDefinition(name) => {
+                create_delete_patch!(CustomResourceDefinition, name, current, desired)
+            }
+            K8sResourceAddress::CustomResource(namespace, kind, name) => {
+                create_delete_patch!(DynamicObject, namespace, name, current, desired)
             }
             // K8sResourceAddress::Binding(_, _) => todo!(),
             // K8sResourceAddress::Endpoints(_, _) => todo!(),

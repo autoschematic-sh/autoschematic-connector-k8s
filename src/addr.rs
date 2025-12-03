@@ -9,6 +9,7 @@ use autoschematic_core::{
 
 type Namespace = String;
 type Name = String;
+type Kind = String;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "fuzz", derive(Arbitrary))]
@@ -20,11 +21,13 @@ pub enum K8sResourceAddress {
     ConfigMap(Namespace, Name),
     // Secret(Namespace, Name),
     PersistentVolumeClaim(Namespace, Name),
-    PersistentVolume(Namespace),
+    PersistentVolume(Name),
     Role(Namespace, Name),
     RoleBinding(Namespace, Name),
     ClusterRole(Name),
     ClusterRoleBinding(Name),
+    CustomResourceDefinition(Name),
+    CustomResource(Namespace, Kind, Name)
 
     // Binding(Namespace, Name),
     // Endpoints(Namespace, Name),
@@ -97,6 +100,12 @@ impl ResourceAddress for K8sClusterAddress {
                     ["clusterrolebinding", role_name] if val(role_name) => {
                         K8sResourceAddress::ClusterRoleBinding(strip(role_name).to_string())
                     }
+                    ["crd", crd_name] if val(crd_name) => {
+                        K8sResourceAddress::CustomResourceDefinition(strip(crd_name).to_string())
+                    }
+                    ["ns", namespace, "cr", kind, cr_name] if val(cr_name) => {
+                        K8sResourceAddress::CustomResource(namespace.to_string(), kind.to_string(), strip(cr_name).to_string())
+                    }
                     _ => return Err(invalid_addr_path(path)),
                 };
 
@@ -142,6 +151,12 @@ impl ResourceAddress for K8sClusterAddress {
             }
             K8sResourceAddress::ClusterRoleBinding(name) => {
                 PathBuf::from(format!("k8s/{cluster}/clusterrolebinding/{}.yaml", name))
+            }
+            K8sResourceAddress::CustomResourceDefinition(name) => {
+                PathBuf::from(format!("k8s/{cluster}/crd/{}.yaml", name))
+            }
+            K8sResourceAddress::CustomResource(namespace, kind, name) => {
+                PathBuf::from(format!("k8s/{cluster}/ns/{}/cr/{}/{}.yaml", namespace, kind, name))
             }
             // K8sResourceAddress::Binding(namespace, name) => {
             //     PathBuf::from(format!("k8s/{cluster}/ns/{}/binding/{}.yaml", namespace, name))

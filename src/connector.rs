@@ -12,25 +12,24 @@ use autoschematic_core::{
     },
     diag::DiagnosticResponse,
     error::{AutoschematicError, AutoschematicErrorType},
-    get_resource_response,
-    tarpc_bridge::TarpcConnector,
     util::{PrettyConfig, RON, ron_check_eq, ron_check_syntax},
 };
-use k8s_openapi::api::{
-    apps::v1::Deployment,
-    core::v1::{ConfigMap, Namespace, NamespaceSpec, PersistentVolume, PersistentVolumeClaim, Pod, Secret, Service},
+use k8s_openapi::{
+    api::{
+        apps::v1::Deployment,
+        core::v1::{ConfigMap, Namespace, PersistentVolume, PersistentVolumeClaim, Pod, Service},
+    },
+    apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition,
 };
 use kube::{
     Client, Config,
+    api::DynamicObject,
     config::{KubeConfigOptions, Kubeconfig},
 };
 use serde::{Deserialize, Serialize};
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::RwLock;
 
-use crate::{
-    addr::{K8sClusterAddress, K8sResourceAddress},
-    util::strip_boring_fields,
-};
+use crate::addr::{K8sClusterAddress, K8sResourceAddress};
 
 mod get;
 mod list;
@@ -124,7 +123,7 @@ impl Connector for K8sConnector {
 
         Ok(Arc::new(K8sConnector {
             prefix: prefix.into(),
-            client_cache: RwLock::new(HashMap::new())
+            client_cache: RwLock::new(HashMap::new()),
         }))
     }
 
@@ -178,6 +177,8 @@ impl Connector for K8sConnector {
             K8sResourceAddress::RoleBinding(_, _) => ron_check_eq::<PersistentVolume>(a, b),
             K8sResourceAddress::ClusterRole(_) => ron_check_eq::<PersistentVolume>(a, b),
             K8sResourceAddress::ClusterRoleBinding(_) => ron_check_eq::<PersistentVolume>(a, b),
+            K8sResourceAddress::CustomResourceDefinition(_) => ron_check_eq::<CustomResourceDefinition>(a, b),
+            K8sResourceAddress::CustomResource(_, _, _) => ron_check_eq::<DynamicObject>(a, b),
             // K8sResourceAddress::Binding(_, _) => todo!(),
             // K8sResourceAddress::Endpoints(_, _) => todo!(),
             // K8sResourceAddress::LimitRange(_, _) => todo!(),
@@ -205,6 +206,8 @@ impl Connector for K8sConnector {
             K8sResourceAddress::RoleBinding(_, _) => ron_check_syntax::<PersistentVolume>(a),
             K8sResourceAddress::ClusterRole(_) => ron_check_syntax::<PersistentVolume>(a),
             K8sResourceAddress::ClusterRoleBinding(_) => ron_check_syntax::<PersistentVolume>(a),
+            K8sResourceAddress::CustomResourceDefinition(_) => ron_check_syntax::<CustomResourceDefinition>(a),
+            K8sResourceAddress::CustomResource(_, _, _) => ron_check_syntax::<DynamicObject>(a),
             // K8sResourceAddress::Binding(_, _) => todo!(),
             // K8sResourceAddress::Endpoints(_, _) => todo!(),
             // K8sResourceAddress::LimitRange(_, _) => todo!(),

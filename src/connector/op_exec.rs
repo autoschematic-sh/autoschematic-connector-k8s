@@ -6,15 +6,19 @@ use autoschematic_core::{
     connector_op, op_exec_output,
     util::{PrettyConfig, RON, diff_ron_values, ron_check_eq, ron_check_syntax},
 };
-use k8s_openapi::api::{
-    apps::v1::Deployment,
-    core::v1::{ConfigMap, Namespace, NamespaceSpec, PersistentVolume, PersistentVolumeClaim, Pod, Secret, Service},
-    rbac::v1::{ClusterRole, ClusterRoleBinding, Role, RoleBinding},
+use k8s_openapi::{
+    api::{
+        apps::v1::Deployment,
+        core::v1::{ConfigMap, Namespace, NamespaceSpec, PersistentVolume, PersistentVolumeClaim, Pod, Secret, Service},
+        rbac::v1::{ClusterRole, ClusterRoleBinding, Role, RoleBinding},
+    },
+    apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition,
 };
+use kube::api::DynamicObject;
 use kube::{
     Api, Client,
     api::{DeleteParams, ListParams, PatchParams, PostParams},
-    client,
+    client, discovery,
     runtime::reflector::Lookup,
 };
 use serde::Serialize;
@@ -55,7 +59,7 @@ macro_rules! create_delete_patch {
             }
             K8sConnectorOp::Patch(resource) => {
                 let resource: $type = RON.from_str(&resource)?;
-                api.patch($name, &patch_params, &kube::api::Patch::Apply(resource))
+                api.patch($name, &patch_params, &kube::api::Patch::Merge(resource))
                     .await?;
                 OpExecResponse {
                     outputs: None,
@@ -154,7 +158,65 @@ impl K8sConnector {
             }
             K8sResourceAddress::ClusterRoleBinding(name) => {
                 create_delete_patch!(ClusterRoleBinding, name, client, op)
-            } // K8sResourceAddress::Binding(_, _) => todo!(),
+            }
+            K8sResourceAddress::CustomResourceDefinition(name) => {
+                create_delete_patch!(CustomResourceDefinition, name, client, op)
+            }
+            K8sResourceAddress::CustomResource(namespace, kind, name) => {
+                // For custom resources, we need to use discovery to find the API group/version
+                let discovery_client = discovery::Discovery::new(client.clone()).run().await?;
+
+                // Find the resource by kind
+                let api_resource = discovery_client
+                    .groups()
+                    .flat_map(|group| group.resources_by_stability())
+                    .find(|(ar, _)| ar.kind == *kind)
+                    .map(|(ar, _)| ar);
+
+                let Some(api_resource) = api_resource else {
+                    bail!("Custom resource kind '{}' not found in cluster", kind);
+                };
+
+                let api: Api<DynamicObject> = Api::namespaced_with(client.clone(), namespace, &api_resource);
+
+                let patch_params = PatchParams {
+                    field_manager: Some(String::from("autoschematic")),
+                    ..Default::default()
+                };
+
+                let post_params = PostParams {
+                    field_manager: Some(String::from("autoschematic")),
+                    ..Default::default()
+                };
+
+                match op {
+                    K8sConnectorOp::Create(resource) => {
+                        let resource: DynamicObject = RON.from_str(&resource)?;
+                        api.create(&post_params, &resource).await?;
+                        OpExecResponse {
+                            outputs: None,
+                            friendly_message: Some(format!("Created CustomResource {} {}/{}", kind, namespace, name)),
+                        }
+                    }
+                    K8sConnectorOp::Patch(resource) => {
+                        let resource: DynamicObject = RON.from_str(&resource)?;
+                        api.patch(name, &patch_params, &kube::api::Patch::Merge(resource))
+                            .await?;
+                        OpExecResponse {
+                            outputs: None,
+                            friendly_message: Some(format!("Modified CustomResource {} {}/{}", kind, namespace, name)),
+                        }
+                    }
+                    K8sConnectorOp::Delete => {
+                        api.delete(name, &DeleteParams::default()).await?;
+                        OpExecResponse {
+                            outputs: None,
+                            friendly_message: Some(format!("Deleted CustomResource {} {}/{}", kind, namespace, name)),
+                        }
+                    }
+                }
+            }
+            // K8sResourceAddress::Binding(_, _) => todo!(),
               // K8sResourceAddress::Endpoints(_, _) => todo!(),
               // K8sResourceAddress::LimitRange(_, _) => todo!(),
               // K8sResourceAddress::Node(_, _) => todo!(),
