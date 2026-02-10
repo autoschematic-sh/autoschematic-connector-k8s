@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
-#[cfg(feature = "fuzz")]
-use arbitrary::Arbitrary;
+// #[cfg(feature = "fuzz")]
+// use arbitrary::Arbitrary;
 use autoschematic_core::{
     connector::ResourceAddress,
     error_util::{invalid_addr, invalid_addr_path},
@@ -12,7 +12,7 @@ type Name = String;
 type Kind = String;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "fuzz", derive(Arbitrary))]
+// #[cfg_attr(feature = "fuzz", derive(Arbitrary))]
 pub enum K8sResourceAddress {
     Namespace(Namespace),
     Pod(Namespace, Name),
@@ -41,7 +41,7 @@ pub enum K8sResourceAddress {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "fuzz", derive(Arbitrary))]
+// #[cfg_attr(feature = "fuzz", derive(Arbitrary))]
 pub struct K8sClusterAddress {
     pub cluster: String,
     pub res_addr: K8sResourceAddress,
