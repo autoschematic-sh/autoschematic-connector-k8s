@@ -2,7 +2,7 @@
 name = "autoschematic-connector-k8s"
 description = "An Autoschematic connector for declaratively managing Kubernetes resources."
 license = "MIT"
-version = "0.12.3"
+version = "0.12.4"
 edition = "2024"
 authors = ["Peter Sherman <peter@autoschematic.sh>"]
 repository = "https://github.com/autoschematic-sh/autoschematic-connector-k8s"
