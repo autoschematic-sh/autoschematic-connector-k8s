@@ -98,6 +98,11 @@ jobs:
         key: ${{ matrix.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Build release binaries
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install openssl
+
+    - name: Build release binaries
       run: |
         cargo build --release --target ${{ matrix.target }} --bin autoschematic-connector-k8s
 
