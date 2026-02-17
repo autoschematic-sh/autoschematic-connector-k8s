@@ -18,6 +18,7 @@ jobs:
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
       version: ${{ steps.get_version.outputs.version }}
+      crate: "autoschematic-connector-k8s"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -61,16 +62,16 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            asset_name: autoschematic-connector-k8s-${{ needs.create-release.outputs.version }}-linux-x86_64.tar.gz
+            asset_name: ${{ needs.create-release.outputs.crate }}-${{ needs.create-release.outputs.version }}-${{ matrix.target }}.tar.gz
           # - os: windows-latest
           #   target: x86_64-pc-windows-msvc
           #   asset_name: autoschematic-${{ needs.create-release.outputs.version }}-windows-x86_64.zip
           - os: macos-latest
             target: x86_64-apple-darwin
-            asset_name: autoschematic-connector-k8s-${{ needs.create-release.outputs.version }}-macos-x86_64.tar.gz
+            asset_name: ${{ needs.create-release.outputs.crate }}-${{ needs.create-release.outputs.version }}-${{ matrix.target }}.tar.gz
           - os: macos-latest
             target: aarch64-apple-darwin
-            asset_name: autoschematic-connector-k8s-${{ needs.create-release.outputs.version }}-macos-aarch64.tar.gz
+            asset_name: ${{ needs.create-release.outputs.crate }}-${{ needs.create-release.outputs.version }}-${{ matrix.target }}.tar.gz
 
     steps:
       - name: Checkout code
