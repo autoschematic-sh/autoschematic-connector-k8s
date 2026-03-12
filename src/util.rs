@@ -37,6 +37,7 @@ pub fn get_ser_resource_output<T: Serialize>(t: &T) -> anyhow::Result<Option<Get
 
     Ok(Some(GetResourceResponse {
         resource_definition: SERDE.to_string(&v)?.into_bytes(),
+        virt_addr: None,
         outputs: None,
     }))
 }
